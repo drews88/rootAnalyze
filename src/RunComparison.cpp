@@ -161,4 +161,5 @@ void RunComparison() {
     std::string savePath = "../plots/runComp/Spectra/Dark/cleanedComparison.pdf";
 
     multiPlot(dirPaths, runTitles, title, type);
+    cout << "Done" << endl;
 }

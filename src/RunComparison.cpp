@@ -10,10 +10,12 @@
     Main file to create a plot comparing multiple runs, currently (kinda) works for spectra and strip plots.
     at the bottom of the file is RunComparison(), which is run upon execution.
 */
+
 void multiPlot(std::vector<std::string> dirPaths, std::vector<std::string> runTitles, std::string title, std::string type, bool save = false, std::string savePath = "./newPlot.pdf") {
 
-    /*
+     /*
         * Create a canvas and plot multiple histograms on the same canvas
+        * This Function is built to require as little modification as possible. ideally only the legend coordinates may need to be adjusted.
         * @param dirPaths: The paths to the directories containing the root files
         * @param runTitles: The titles of the runs
         * @param title: The title of the plot
@@ -21,43 +23,37 @@ void multiPlot(std::vector<std::string> dirPaths, std::vector<std::string> runTi
         * @param save: Save the plot to a file
         * @param savePath: The path to save the plot
     */
-
-    //name of all the files(in my setup)
     std::string fileName = "output.root";
-
-    // Set the style of the plot
     gStyle->SetOptStat(0);
 
-    // Create a canvas to draw the histograms
+    // Canvas setup
     TCanvas *c = new TCanvas("c", "Multiple Histograms", 800, 600);
     c->SetGrid();
 
-    // Create a legend
-    TLegend *legend = new TLegend(0.6, 0.6, 0.9, 0.9);
-    legend->SetTextSize(0.025);
-    legend->SetMargin(0.1);
+    // Legend setup
+    TLegend *legend = new TLegend(0.1, 0.7, 0.3, 0.9);  
+    legend->SetTextSize(0.03);
+    legend->SetBorderSize(0);
+    legend->SetFillStyle(0);
 
-    // Color counter
-    int colorIndex = 1;
+    // Define specific colors
+    int colors[] = {kBlue - 9, kRed - 7};  // Light blue and light red
+    int colorIndex = 0;
 
-    //used to loop over the run titles for the legend
     int runIndex = 0;
-
-    // find the global maximum for consistent scaling
     double globalMax = 0;
+    std::vector<TH1F*> histograms;
 
-    // First pass to find the global maximum
+    // First pass to find global maximum
     for (const auto &dirPath : dirPaths) {
         std::string fullPath = dirPath + fileName;
         TH1F *hist = nullptr;
         getData(fullPath, hist, type);
 
         if (hist) {
-            // Update globalMax if this histogram has a larger maximum
             double maxVal = hist->GetMaximum();
-            if (maxVal > globalMax) {
-                globalMax = maxVal;
-            }
+            if (maxVal > globalMax) globalMax = maxVal;
+            histograms.push_back(hist);
         } else {
             std::cerr << "Failed to retrieve histogram from " << fullPath << std::endl;
         }
@@ -65,59 +61,38 @@ void multiPlot(std::vector<std::string> dirPaths, std::vector<std::string> runTi
 
     // Second pass to draw histograms with consistent scaling
     for (const auto &dirPath : dirPaths) {
-
-        //define the full path to the file
         std::string fullPath = dirPath + fileName;
-
-        //initialize and define the histogram
         TH1F *hist = nullptr;
         getData(fullPath, hist, type);
 
-        // Check if the histogram was successfully retrieved
         if (!hist) continue;
 
-        if (type == "Cathode/charge/chargeL3") {
-            prepareCathodeChargeHist(hist);  
-        }
-
-        // Set the histogram style
-        hist->SetLineColor(colorIndex);
-        hist->SetFillColor(colorIndex);
+        // Apply custom styling
+        hist->SetLineColor(colors[colorIndex]);
+        hist->SetFillColorAlpha(colors[colorIndex], 0.5); // Semi-transparent fill
         hist->SetLineWidth(2);
-        hist->SetMarkerStyle(0);
 
-        // Set the histogram title
         hist->SetTitle(title.c_str());
+        legend->AddEntry(hist, runTitles[runIndex].c_str(), "f");
 
-        // Add the legend entry
-        legend->AddEntry(hist, runTitles[runIndex].c_str(), "l");
-
-        // Set y-axis range to the global maximum (with some padding)
-        hist->SetMaximum(globalMax * 1.1);
+        // Set consistent y-axis scaling
+        hist->SetMaximum(globalMax * 1.2);
         hist->SetMinimum(0);
 
-        // Draw the histogram
-        if (colorIndex == 1) {
-            hist->Draw();
+        if (colorIndex == 0) {
+            hist->Draw("HIST");  // "HIST" for histogram style
         } else {
-            hist->Draw("SAME");
+            hist->Draw("HIST SAME");
         }
 
-        //increment run index
         runIndex++;
-        colorIndex++;
+        colorIndex = (colorIndex + 1) % 2;  // Alternate between colors
     }
 
-    // Draw the legend
     legend->Draw();
-
-    // Update and save the canvas
     c->Update();
-    if (save) {
-        c->SaveAs(savePath.c_str());
-    }
+    if (save) c->SaveAs(savePath.c_str());
 }
-
 
 void RunComparison() {
     /*
@@ -152,14 +127,14 @@ void RunComparison() {
                                           };
 
     //plot title
-    std::string title = "Dark Spectra Comparison";
+    std::string title = "Dark Run Strip Comparison";
 
     //type of histogram to plot(path to the histogram within the root file)
     std::string type = "Cathode/strip/stripL3";
 
     //where to save the plot(if applicable)
-    std::string savePath = "../plots/runComp/Spectra/Dark/cleanedComparison.pdf";
+    std::string savePath = "../plots/runComp/strip/03comparisons.pdf";
 
-    multiPlot(dirPaths, runTitles, title, type);
+    multiPlot(dirPaths, runTitles, title, type, true, savePath);
     cout << "Done" << endl;
 }

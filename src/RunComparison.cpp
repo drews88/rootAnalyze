@@ -6,6 +6,10 @@
 #include <string>
 #include "HistUtils.h"
 
+/*
+    Main file to create a plot comparing multiple runs, currently (kinda) works for spectra and strip plots.
+    at the bottom of the file is RunComparison(), which is run upon execution.
+*/
 void multiPlot(std::vector<std::string> dirPaths, std::vector<std::string> runTitles, std::string title, std::string type, bool save = false, std::string savePath = "./newPlot.pdf") {
 
     /*
@@ -126,6 +130,8 @@ void RunComparison() {
          "./root_files/05_centralGas_Cd_Scans/"     "Central Gas Cd Scans"          10-31
                     
     */
+
+    //paths to runs
     std::vector<std::string> dirPaths = {//"../root_files/00_pmx_ArCO2/dark/",
                                          //"../root_files/01_dyn_ArCO2/dark/",
                                          //"../root_files/02_dyn_freshCF4/dark/raw1/",
@@ -135,6 +141,7 @@ void RunComparison() {
                                          //"../root_files/05_centralGas_Cd_Scans/dark/raw3600/"
                                          };
 
+    //titles of the runs for the legend
     std::vector<std::string> runTitles = {//"Premixed ArCO2",
                                           //"Dynamic ArCO2",
                                           //"Dynamic Fresh CF4",
@@ -144,8 +151,13 @@ void RunComparison() {
                                           //"Central Gas Cd Scans"
                                           };
 
+    //plot title
     std::string title = "Dark Spectra Comparison";
+
+    //type of histogram to plot(path to the histogram within the root file)
     std::string type = "Cathode/strip/stripL3";
+
+    //where to save the plot(if applicable)
     std::string savePath = "../plots/runComp/Spectra/Dark/cleanedComparison.pdf";
 
     multiPlot(dirPaths, runTitles, title, type);

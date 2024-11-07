@@ -5,6 +5,10 @@
 #include <TH1F.h>
 #include <string>
 
+/*
+    Header file to initialize functions(for c++ reasons)
+*/
+
 // Function to retrieve the histogram from the file
 void getData(const std::string &flnm, TH1F* &hist, std::string type, bool norm = false);
 

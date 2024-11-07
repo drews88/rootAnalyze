@@ -3,6 +3,9 @@
 #include <TH1F.h>
 #include <iostream>
 
+/*
+    Helper Functions for Main file(s)
+*/
 // Function to retrieve the histogram from the file
 void getData(const std::string &flnm, TH1F* &hist, std::string type, bool norm) {
     TFile *mTFile = TFile::Open(flnm.c_str());

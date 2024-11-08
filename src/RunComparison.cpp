@@ -13,6 +13,16 @@
 
 void multiPlot(std::vector<std::string> dirPaths, std::string filePath, std::vector<std::string> runTitles, std::string title, std::string type, bool save = false, std::string savePath = "./newPlot.pdf") {
 
+     /*
+        * Create a canvas and plot multiple histograms on the same canvas
+        * This Function is built to require as little modification as possible. ideally only the legend coordinates may need to be adjusted.
+        * @param dirPaths: The paths to the directories containing the root files
+        * @param runTitles: The titles of the runs
+        * @param title: The title of the plot
+        * @param type: The type of histogram to retrieve
+        * @param save: Save the plot to a file
+        * @param savePath: The path to save the plot
+    */
     gStyle->SetOptStat(0);
 
     // Canvas setup

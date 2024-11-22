@@ -4,7 +4,7 @@
 #include <TLegend.h>
 #include <vector>
 #include <string>
-#include "HistUtils.h"
+#include "../Utils/HistUtils.h"
 
 /*
     Main file to create a plot comparing multiple runs, currently (kinda) works for spectra and strip plots.
@@ -148,7 +148,7 @@ void RunComparison() {
          "../root_files/src_new_connect/R1raw2/"        "Right Justified +1 Run 1"
          "../root_files/src_new_connect/R1raw3/"        "Right Justified +1 Run 2"
                     
-                        root -l -e ".L HistUtils.cpp" -e ".x RunComparison.cpp"
+                        root -l -e ".L ../Utils/HistUtils.cpp" -e ".x RunComparison.cpp"
     */
     //NOTE: REDO THIS FOR THE OLD CONNECTOR RUNS AGAIN, REMOVE RUN 5, RAW6
     //paths to runs

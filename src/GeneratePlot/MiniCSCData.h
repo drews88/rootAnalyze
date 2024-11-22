@@ -73,66 +73,51 @@ public:
     ///                       If false, not found graphs will be empty
     /// @param vectStartZero If true, graph getter vectors will start at zero, so to get a graph for a layer you would
     ///                      need to use layer - 1. If false, graph vectors will start at 1, aligning with miniCSC
-    #include <string>
-#include <iostream>
-#include <sstream>
-#include <vector>
+    MiniCSCData(const char* rootFilePath, bool nullableGraphs = true, bool vectStartZero = true)
+        : nullableGraphs_(nullableGraphs)
+        , vectStartZero_(vectStartZero)
+    {
+        // Allow other open options?
+        rootFile_ = new TFile(rootFilePath, "READ");
 
-MiniCSCData(const char* rootFilePath, bool nullableGraphs = true, bool vectStartZero = true)
-    : nullableGraphs_(nullableGraphs)
-    , vectStartZero_(vectStartZero)
-{
-    // Allow other open options?
-    rootFile_ = new TFile(rootFilePath, "READ");
+        if (rootFile_->IsZombie()) {
+            std::cerr << "Root file " << rootFilePath
+                      << " was not opened properly. Please check that the file exists. Exiting program.\n";
+            std::exit(2);
+        }
 
-    if (rootFile_->IsZombie()) {
-        std::cerr << "Root file " << rootFilePath
-                  << " was not opened properly. Please check that the file exists. Exiting program.\n";
-        std::exit(2);
+        // Getting the file name from path for future utilities
+        std::stringstream path(rootFilePath);
+        std::string segment;
+        std::vector<std::string> seglist;
+
+        while (std::getline(path, segment, '/')) {
+            seglist.push_back(segment);
+        }
+        // NOTE: It appears root will free the strdup result at some point, when I tried to do it manually
+        //       the interpreter complained about duplicate freeing.
+        rootFileName_ = strdup(seglist.back().c_str());
+
+        // Getting anode graphs
+        wireOccupancy_ = GetGraphs<TH1D>(Graph::kWireOccupancy);
+        simulAnodeHit_ = GetGraphs<TH2F>(Graph::kSimulAnodeHit);
+        firedTBinAnode_ = GetGraphs<TH2F>(Graph::kFiredTBinAnode);
+        firedWireGroup_ = GetGraph<TH1I>(Graph::kFiredWireGroup);
+
+        // Getting cathode graphs
+        chargeSpectra_ = GetGraphs<TH1D>(Graph::kChargeSpectra);
+        chargeTBin_ = GetGraphs<TH1D>(Graph::kChargeTBin);
+        chargeTBinWeighted_ = GetGraphs<TH1D>(Graph::kChargeTBinWeighted);
+        stripTBinADCVal_ = GetGraphs<TH2F>(Graph::kStripTBinADCVal);
+        stripOccupancy_ = GetGraphs<TH1D>(Graph::kStripOccupancy);
+        halfStripOccupancy_ = GetGraphs<TH1D>(Graph::kHalfStripOccupancy);
+        avgPedestal_ = GetGraphs<TH1F>(Graph::kAveragePedestal);
+        fstPedestal_ = GetGraphs<TH1F>(Graph::kFirstPedestal);
+        firedStrip_ = GetGraph<TH1I>(Graph::kFiredStrip);
+        chargeTBinProfile_ = GetGraph<TProfile>(Graph::kChargeTBinProfile);
     }
 
-    // Getting the file name from path for future utilities
-    std::stringstream path(rootFilePath);
-    std::string segment;
-    std::vector<std::string> seglist;
-
-    while (std::getline(path, segment, '/')) {
-        seglist.push_back(segment);
-    }
-    std::cout << "pushed back seglist. now getting rootFileName_" << std::endl; // DEBUG
-
-    if (rootFilePath == nullptr) {
-        std::cerr << "Error: Null pointer passed as rootFilePath.\n";
-        rootFileName_.clear();  // Use std::string's clear() to reset
-    } else {
-        std::cout << "not null" << std::endl; // DEBUG
-        rootFileName_ = std::string(rootFilePath); // Safe string handling
-    }
-
-    std::cout << "got rootFileName_. now getting anode graphs." << std::endl; // DEBUG
-    // Getting anode graphs
-    wireOccupancy_ = GetGraphs<TH1D>(Graph::kWireOccupancy);
-    simulAnodeHit_ = GetGraphs<TH2F>(Graph::kSimulAnodeHit);
-    firedTBinAnode_ = GetGraphs<TH2F>(Graph::kFiredTBinAnode);
-    firedWireGroup_ = GetGraph<TH1I>(Graph::kFiredWireGroup);
-
-    std::cout << "got anode graphs. now getting cathode graphs." << std::endl; // DEBUG
-    // Getting cathode graphs
-    chargeSpectra_ = GetGraphs<TH1D>(Graph::kChargeSpectra);
-    chargeTBin_ = GetGraphs<TH1D>(Graph::kChargeTBin);
-    chargeTBinWeighted_ = GetGraphs<TH1D>(Graph::kChargeTBinWeighted);
-    stripTBinADCVal_ = GetGraphs<TH2F>(Graph::kStripTBinADCVal);
-    stripOccupancy_ = GetGraphs<TH1D>(Graph::kStripOccupancy);
-    halfStripOccupancy_ = GetGraphs<TH1D>(Graph::kHalfStripOccupancy);
-    avgPedestal_ = GetGraphs<TH1F>(Graph::kAveragePedestal);
-    fstPedestal_ = GetGraphs<TH1F>(Graph::kFirstPedestal);
-    firedStrip_ = GetGraph<TH1I>(Graph::kFiredStrip);
-    chargeTBinProfile_ = GetGraph<TProfile>(Graph::kChargeTBinProfile);
-    std::cout << "got all graphs. wtf is even happening at this point??" << std::endl; // DEBUG
-}
-
-
-     ~MiniCSCData() { std::free(rootFileName_); }
+    // ~MiniCSCData() { std::free(rootFileName_); }
 
     // Anode Getters ===========================================================
 
@@ -200,7 +185,6 @@ MiniCSCData(const char* rootFilePath, bool nullableGraphs = true, bool vectStart
     /// @return vector of pointers to graphs for each layer
     template <typename T> std::vector<T*> GetGraphs(Graph name) const
     {
-        //std::cout << "Getting graphs for " << static_cast<int>(name) << std::endl; // DEBUG
         // Return an empty vector if the graph is single layer only
         if (std::string(graphPaths_[static_cast<int>(name)]).back() != 'L') {
             std::cout << "Error: Graph is not a multi-layer graph" << std::endl;
@@ -230,7 +214,7 @@ MiniCSCData(const char* rootFilePath, bool nullableGraphs = true, bool vectStart
 private:
     /// Value used to check for default layer numbers
     const static uint16_t kInvalidLayer_ = 0;
-    std::string rootFileName_;
+    char* rootFileName_;
     bool nullableGraphs_;
     bool vectStartZero_;
 

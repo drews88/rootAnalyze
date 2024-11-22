@@ -1,4 +1,4 @@
-#include "../MiniCSCData.h"
+#include "MiniCSCData.h"
 /*
 
     *
@@ -29,7 +29,7 @@ void myMiniCSCData()
     std::string voltage = "3.6";
     
     //where to find the root file
-    std::string rootFileNameString = "../../root_files/pins_rotated/L0raw1/output.root";
+    std::string rootFileNameString = "./output.root";
 
     //convert string to const char*
     const char* rootFileName = rootFileNameString.c_str();
@@ -51,6 +51,7 @@ void myMiniCSCData()
 
     TCanvas* chargeSpectraL3Canvas = new TCanvas("c1","c1",1000,800);
     chargeSpectraL3->Draw();
+    std::cout << "Saving Charge Spectra L1" << std::endl;
     chargeSpectraL3Canvas->SaveAs((filePath + "ChargeSpectra_L1.png").c_str());
     delete chargeSpectraL3Canvas;
 
